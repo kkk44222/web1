@@ -1,1 +1,337 @@
-# web1
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Portal Ultimate de Videojuegos</title>
+  <meta name="description" content="Plantilla profesional de videojuegos con navegación, temas, recomendador local y música." />
+  <style>
+    /* ---------- VARIABLES Y RESET ---------- */
+    :root{--bg:#071227;--card:#0c1522;--muted:#9aa7b8;--text:#e6eef7;--accent:#7c5cff;--accent2:#00e5a8}
+    [data-theme="neon"]{--accent:#ff3bff;--accent2:#00e5ff;--bg:#05040a}
+    [data-theme="glass"]{--accent:#7c5cff;--accent2:#00e5a8;--bg:linear-gradient(180deg,#071227,#02101a)}
+    [data-theme="minimal"]{--accent:#0b5cff;--accent2:#0bb27a;--bg:#f7fafc;--card:#ffffff;--text:#0f1724;--muted:#6b7280}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Roboto,-apple-system,Segoe UI,Arial;background:var(--bg);color:var(--text)}
+    a{color:inherit}
+
+    /* ---------- LAYOUT ---------- */
+    .app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+    .sidebar{padding:20px;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);backdrop-filter:blur(6px);border-right:1px solid rgba(255,255,255,0.03)}
+    .logo{display:flex;gap:12px;align-items:center}
+    .logo .box{width:46px;height:46px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:800}
+    .nav{margin-top:18px;display:flex;flex-direction:column;gap:8px}
+    .nav button{background:transparent;border:0;color:var(--muted);text-align:left;padding:10px;border-radius:8px;cursor:pointer}
+    .nav button.active{background:linear-gradient(90deg,rgba(124,92,255,0.12),rgba(0,229,168,0.03));color:var(--text)}
+
+    .main{padding:18px}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+    .input,select,textarea{padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
+
+    /* ---------- HERO ANIMADO ---------- */
+    .hero{border-radius:14px;padding:20px;margin-bottom:16px;background:linear-gradient(90deg,rgba(255,255,255,0.02),transparent);display:flex;align-items:center;gap:18px}
+    .hero .title{font-size:20px;font-weight:800}
+    .ribbon{padding:6px 10px;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:white;font-weight:700}
+
+    /* ---------- GRID / CARDS ---------- */
+    .grid{display:grid;grid-template-columns:1fr 380px;gap:18px}
+    .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 8px 30px rgba(2,6,23,0.6)}
+    .full{grid-column:1/-1}
+    .categories-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+    .category-card{padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);cursor:pointer;display:flex;gap:12px;align-items:center}
+
+    /* ---------- LISTA JUEGOS ---------- */
+    .game-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);gap:12px;margin-bottom:8px}
+    .game-meta{display:flex;gap:12px;align-items:center}
+    .thumb{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#06172a,#0a2240);display:flex;align-items:center;justify-content:center;font-weight:700}
+    .title{font-weight:700}
+    .sub{color:var(--muted);font-size:13px}
+    .btn{padding:8px 10px;border-radius:8px;border:0;cursor:pointer}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:white}
+
+    /* ---------- AUDIO PLAYER ---------- */
+    .audio-player{display:flex;align-items:center;gap:10px}
+    .progress{height:6px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden;width:180px}
+    .progress > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+
+    /* ---------- RESPONSIVE ---------- */
+    @media (max-width:980px){.app{grid-template-columns:1fr}.sidebar{display:none}.grid{grid-template-columns:1fr}.main{padding:12px}}
+
+  </style>
+  <!-- JSZip + FileSaver -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body data-theme="glass">
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo"><div class="box">VG</div><div><div style="font-weight:800">Portal Ultimate</div><div style="font-size:12px;color:var(--muted)">Full-Stack Frontend</div></div></div>
+      <nav class="nav" id="nav">
+        <button data-target="home" class="active">Inicio</button>
+        <button data-target="categorias">Categorías</button>
+        <button data-target="recomendaciones">Recomendaciones IA</button>
+        <button data-target="buscar">Buscar</button>
+      </nav>
+      <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">
+        <label style="font-size:13px;color:var(--muted)">Tema</label>
+        <select id="themeSelect" class="input"><option value="glass">Glass</option><option value="neon">Neon</option><option value="minimal">Minimal</option></select>
+        <label style="font-size:13px;color:var(--muted)">Idioma</label>
+        <select id="langSelect" class="input"><option value="es">Español</option><option value="en">English</option></select>
+        <button id="downloadZip" class="btn">Descargar ZIP del proyecto</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="hero">
+        <div style="flex:1">
+          <div class="ribbon">Portal Ultimate</div>
+          <div class="title">Tu catálogo profesional de videojuegos</div>
+          <div style="color:var(--muted);margin-top:6px">Categorías, rankings, recomendador inteligente.</div>
+          <div style="margin-top:10px"><button id="startDemo" class="btn primary">Ver demo rápido</button></div>
+        </div>
+        <div>
+          <!-- Animación simple con SVG -->
+          <svg width="160" height="120" viewBox="0 0 160 120" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#00e5a8"/></linearGradient>
+            </defs>
+            <rect x="8" y="10" rx="12" ry="12" width="144" height="100" fill="url(#g1)" opacity="0.12"></rect>
+            <g>
+              <rect x="20" y="24" width="44" height="36" rx="6" fill="#0b1220" stroke="#ffffff10"></rect>
+              <rect x="96" y="24" width="44" height="36" rx="6" fill="#0b1220" stroke="#ffffff10"></rect>
+              <circle cx="42" cy="54" r="4" fill="#7c5cff" />
+              <circle cx="118" cy="54" r="4" fill="#00e5a8" />
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="topbar">
+        <div>
+          <h2 style="margin:0">Inicio</h2>
+          <div style="color:var(--muted);font-size:13px">Explora, busca y recibe recomendaciones.</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="topSearch" class="input" placeholder="Buscar juego, género o plataforma..." />
+          <button id="openSearch" class="btn primary">Buscar</button>
+        </div>
+      </div>
+
+      <div id="home" class="section">
+        <div class="grid">
+          <section class="card">
+            <h3 style="margin-top:0">Categorías rápidas</h3>
+            <div class="categories-grid" id="categoriesGrid"></div>
+          </section>
+
+          <aside class="card">
+            <h4 style="margin-top:0">Recomendación instantánea</h4>
+            <div id="quickRec">Usa el cuestionario o prueba el demo.</div>
+            <div style="margin-top:10px">
+              <div class="audio-player">
+                <button id="toggleMusic" class="btn">Play / Stop</button>
+                <div class="progress"><i id="progBar"></i></div>
+                <div id="musicState" class="small">Música: parada</div>
+              </div>
+            </div>
+          </aside>
+
+          <section class="card full">
+            <h3 style="margin-top:0">Top picks</h3>
+            <div id="topGlobal"></div>
+          </section>
+        </div>
+      </div>
+
+      <!-- CATEGORÍAS -->
+      <div id="categorias" class="section" style="display:none">
+        <div class="card">
+          <h3 style="margin-top:0">Todas las categorías</h3>
+          <div class="categories-grid" id="allCategories"></div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h4>Explorar juegos</h4>
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+            <select id="filterGenre" class="input"></select>
+            <select id="filterPlatform" class="input"><option value="any">Plataforma: Cualquiera</option><option value="PC">PC</option><option value="PS">PlayStation</option><option value="Xbox">Xbox</option><option value="Switch">Switch</option></select>
+            <select id="filterOrder" class="input"><option value="best">Orden: Mejor a peor</option><option value="worst">Orden: Peor a mejor</option></select>
+            <input id="filterText" class="input" placeholder="Filtrar por título..." />
+          </div>
+          <div id="gamesListAll"></div>
+        </div>
+      </div>
+
+      <!-- RECOMENDACIONES IA -->
+      <div id="recomendaciones" class="section" style="display:none">
+        <div class="card">
+          <h3 style="margin-top:0">Cuestionario inteligente (IA local)</h3>
+          <p style="color:var(--muted)">Genera recomendaciones en el navegador sin enviar datos a servidores.</p>
+          <form id="quizForm">
+            <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+              <select id="qGenre" class="input"></select>
+              <select id="qMood" class="input"><option value="any">Estado de ánimo</option><option value="intense">Intenso</option><option value="chill">Relajado</option><option value="thoughtful">Narrativo</option></select>
+              <select id="qMulti" class="input"><option value="any">Multijugador</option><option value="yes">Sí</option><option value="no">No</option></select>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+              <select id="qPlatform" class="input"><option value="any">Plataforma</option><option value="PC">PC</option><option value="PS">PlayStation</option><option value="Xbox">Xbox</option><option value="Switch">Switch</option></select>
+              <input id="qText" class="input" placeholder="Palabras clave: 'historia', 'cooperativo', 'terror psicológico'" />
+            </div>
+            <div style="display:flex;gap:8px">
+              <button type="button" id="runQuiz" class="btn primary">Generar recomendaciones</button>
+              <button type="button" id="clearQuiz" class="btn">Limpiar</button>
+            </div>
+          </form>
+          <div id="quizResults" style="margin-top:12px"></div>
+        </div>
+      </div>
+
+      <!-- BUSCAR -->
+      <div id="buscar" class="section" style="display:none">
+        <div class="card">
+          <h3 style="margin-top:0">Buscador avanzado</h3>
+          <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+            <input id="sText" class="input" placeholder="Nombre del juego..." />
+            <select id="sGenre" class="input"></select>
+            <button id="sBtn" class="btn primary">Buscar</button>
+          </div>
+          <div id="sResults"></div>
+        </div>
+      </div>
+
+  <script>
+/*********************** DATOS INICIALES (50+) ***********************/
+const INITIAL_GAMES = [
+  {title: "Resident Evil Village", category: "Terror", platform: "PC,PS,Xbox", url: "https://www.residentevil.com/village/", multiplayer: false, mood: "intense", tags: ["terror","psicologico"]},
+  {title: "Outlast 2", category: "Terror", platform: "PC,PS,Xbox", url: "https://redbarrelsgames.com/", multiplayer: false, mood: "intense", tags: ["terror"]},
+  {title: "Amnesia: The Dark Descent", category: "Terror", platform: "PC", url: "https://frictionalgames.com/", multiplayer: false, mood: "intense", tags: ["terror","claustrofobico"]},
+  {title: "Phasmophobia", category: "Terror", platform: "PC", url: "https://phasmophobia-game.com/", multiplayer: true, mood: "intense", tags: ["cooperativo","fantasmas"]},
+  {title: "Alan Wake 2", category: "Suspenso", platform: "PC,PS,Xbox", url: "https://www.alanwake.com/", multiplayer: false, mood: "thoughtful", tags: ["narrativa","suspenso"]},
+  {title: "Control", category: "Suspenso", platform: "PC,PS,Xbox", url: "https://controlgame.com/", multiplayer: false, mood: "thoughtful", tags: ["sobrenatural"]},
+  {title: "The Legend of Zelda: Breath of the Wild", category: "Aventura", platform: "Switch", url: "https://www.zelda.com/breath-of-the-wild/", multiplayer: false, mood: "chill", tags: ["exploracion","mundo abierto"]},
+  {title: "Genshin Impact", category: "Aventura", platform: "PC,Switch,PS,Mobile", url: "https://genshin.hoyoverse.com/", multiplayer: true, mood: "chill", tags: ["gacha","exploracion"]},
+  {title: "Mass Effect Legendary Edition", category: "Ciencia Ficción", platform: "PC,PS,Xbox", url: "https://www.ea.com/games/mass-effect/mass-effect-legendary-edition", multiplayer: false, mood: "thoughtful", tags: ["rpg","narrativa"]},
+  {title: "Cyberpunk 2077", category: "Ciencia Ficción", platform: "PC,PS,Xbox", url: "https://www.cyberpunk.net/", multiplayer: false, mood: "intense", tags: ["futuro","rpg"]},
+  {title: "Mario Kart 8 Deluxe", category: "Para la familia", platform: "Switch", url: "https://mariokart8.nintendo.com/", multiplayer: true, mood: "chill", tags: ["kart","familia"]},
+  {title: "Stardew Valley", category: "Para la familia", platform: "PC,Switch,PS,Xbox", url: "https://www.stardewvalley.net/", multiplayer: true, mood: "chill", tags: ["simulacion","granjas"]},
+  {title: "Elden Ring", category: "RPG", platform: "PC,PS,Xbox", url: "https://en.bandainamcoent.eu/elden-ring/elden-ring", multiplayer: false, mood: "intense", tags: ["accion","fantasia"]},
+  {title: "Final Fantasy VII Remake", category: "RPG", platform: "PC,PS", url: "https://square-enix-games.com/", multiplayer: false, mood: "thoughtful", tags: ["rpg","historia"]},
+  {title: "Doom Eternal", category: "Shooter", platform: "PC,PS,Xbox", url: "https://slayersclub.bethesda.net/doom-eternal", multiplayer: false, mood: "intense", tags: ["fps","accion"]},
+  {title: "Valorant", category: "Shooter", platform: "PC", url: "https://playvalorant.com/", multiplayer: true, mood: "intense", tags: ["competitivo","fps"]},
+  {title: "FIFA 23", category: "Deportes", platform: "PC,PS,Xbox", url: "https://www.ea.com/games/fifa", multiplayer: true, mood: "chill", tags: ["futbol"]},
+  {title: "NBA 2K23", category: "Deportes", platform: "PC,PS,Xbox", url: "https://nba.2k.com/", multiplayer: true, mood: "chill", tags: ["basket"]},
+  {title: "GTA V", category: "Mundo Abierto", platform: "PC,PS,Xbox", url: "https://www.rockstargames.com/V", multiplayer: true, mood: "intense", tags: ["sandbox"]},
+  {title: "Red Dead Redemption 2", category: "Mundo Abierto", platform: "PC,PS,Xbox", url: "https://www.rockstargames.com/", multiplayer: false, mood: "thoughtful", tags: ["historia","western"]},
+  {title: "Microsoft Flight Simulator", category: "Simulación", platform: "PC,Xbox", url: "https://www.flightsimulator.com/", multiplayer: false, mood: "thoughtful", tags: ["simulacion"]},
+  {title: "The Sims 4", category: "Simulación", platform: "PC,PS,Xbox", url: "https://www.ea.com/games/the-sims/the-sims-4", multiplayer: false, mood: "chill", tags: ["vida"]},
+  {title: "Hollow Knight", category: "Indie", platform: "PC,Switch,PS,Xbox", url: "https://www.teamcherry.com.au/", multiplayer: false, mood: "thoughtful", tags: ["metroidvania"]},
+  {title: "Hades", category: "Indie", platform: "PC,Switch,PS,Xbox", url: "https://supergiantgames.com/games/hades/", multiplayer: false, mood: "intense", tags: ["roguelike"]},
+  {title: "Fortnite", category: "Multijugador", platform: "PC,PS,Xbox,Switch", url: "https://www.epicgames.com/fortnite/", multiplayer: true, mood: "intense", tags: ["battle royale"]},
+  {title: "Apex Legends", category: "Multijugador", platform: "PC,PS,Xbox", url: "https://www.ea.com/games/apex-legends", multiplayer: true, mood: "intense", tags: ["battle royale"]},
+  {title: "Civilization VI", category: "Estrategia", platform: "PC,Switch,PS,Xbox", url: "https://www.civilization.com/", multiplayer: true, mood: "thoughtful", tags: ["estrategia"]},
+  {title: "Age of Empires IV", category: "Estrategia", platform: "PC", url: "https://www.ageofempires.com/", multiplayer: true, mood: "thoughtful", tags: ["RTS"]},
+  {title: "Subnautica", category: "Supervivencia", platform: "PC,PS,Xbox", url: "https://unknownworlds.com/subnautica/", multiplayer: false, mood: "thoughtful", tags: ["exploracion"]},
+  {title: "Rust", category: "Supervivencia", platform: "PC", url: "https://rust.facepunch.com/", multiplayer: true, mood: "intense", tags: ["survival"]},
+  {title: "Celeste", category: "Plataformas", platform: "PC,Switch,PS,Xbox", url: "https://www.celestegame.com/", multiplayer: false, mood: "thoughtful", tags: ["platformer"]},
+  {title: "Ori and the Blind Forest", category: "Plataformas", platform: "PC,Xbox,Switch", url: "https://www.orithegame.com/", multiplayer: false, mood: "thoughtful", tags: ["platformer"]},
+  {title: "Forza Horizon 5", category: "Carreras", platform: "PC,Xbox", url: "https://forza.net/", multiplayer: true, mood: "intense", tags: ["racing"]},
+  {title: "Gran Turismo 7", category: "Carreras", platform: "PS", url: "https://www.gran-turismo.com/", multiplayer: true, mood: "intense", tags: ["racing"]},
+  {title: "Counter-Strike 2", category: "Shooter", platform: "PC", url: "https://store.steampowered.com/app/730/CounterStrike_Global_Offensive/", multiplayer: true, mood: "intense", tags: ["fps"]},
+  {title: "Persona 5 Royal", category: "RPG", platform: "PS,PC", url: "https://atlus.com/", multiplayer: false, mood: "thoughtful", tags: ["rpg","jrpg"]},
+  {title: "Terraria", category: "Indie", platform: "PC,Switch,PS,Xbox", url: "https://terraria.org/", multiplayer: true, mood: "chill", tags: ["sandbox"]},
+  {title: "Minecraft", category: "Mundo Abierto", platform: "PC,PS,Xbox,Switch,Mobile", url: "https://www.minecraft.net/", multiplayer: true, mood: "chill", tags: ["sandbox","creativo"]},
+  {title: "The Witcher 3", category: "RPG", platform: "PC,PS,Xbox,Switch", url: "https://thewitcher.com/", multiplayer: false, mood: "thoughtful", tags: ["rpg","narrativa"]},
+  {title: "Dead by Daylight", category: "Multijugador", platform: "PC,PS,Xbox,Switch", url: "https://deadbydaylight.com/", multiplayer: true, mood: "intense", tags: ["horror","cooperativo"]},
+  {title: "League of Legends", category: "Multijugador", platform: "PC", url: "https://www.leagueoflegends.com/", multiplayer: true, mood: "intense", tags: ["MOBA","competitivo"]},
+  {title: "Horizon Forbidden West", category: "Aventura", platform: "PS", url: "https://www.playstation.com/games/horizon-forbidden-west/", multiplayer: false, mood: "chill", tags: ["exploracion","accion"]},
+  {title: "Splatoon 3", category: "Shooter", platform: "Switch", url: "https://www.nintendo.com/games/detail/splatoon-3-switch/", multiplayer: true, mood: "chill", tags: ["shoot","familia"]},
+  {title: "Metroid Dread", category: "Plataformas", platform: "Switch", url: "https://www.nintendo.com/games/detail/metroid-dread-switch/", multiplayer: false, mood: "intense", tags: ["action","platformer"]},
+  {title: "Ratchet & Clank: Rift Apart", category: "Aventura", platform: "PS", url: "https://www.playstation.com/games/ratchet-and-clank-rift-apart/", multiplayer: false, mood: "chill", tags: ["aventura","familia"]},
+  {title: "Bayonetta 3", category: "Aventura", platform: "Switch", url: "https://www.nintendo.com/games/detail/bayonetta-3-switch/", multiplayer: false, mood: "intense", tags: ["accion","fantasia"]},
+  {title: "Dead Cells", category: "Indie", platform: "PC,Switch,PS,Xbox", url: "https://dead-cells.com/", multiplayer: false, mood: "intense", tags: ["roguelike","accion"]},
+  {title: "Dragon Age: Inquisition", category: "RPG", platform: "PC,PS,Xbox", url: "https://www.ea.com/games/dragon-age/dragon-age-inquisition", multiplayer: false, mood: "thoughtful", tags: ["rpg","historia"]}
+];
+
+    // Usar almacenamiento local para persistencia
+    function loadData(){ const raw = localStorage.getItem('vg_games'); if(raw) return JSON.parse(raw); localStorage.setItem('vg_games', JSON.stringify(INITIAL_GAMES)); return INITIAL_GAMES.slice(); }
+    function saveData(arr){ localStorage.setItem('vg_games', JSON.stringify(arr)); }
+
+    let GAMES = loadData();
+
+    /*********************** RENDERIZADO ***********************/
+    function getAllCategories(){ const cats = new Set(GAMES.map(g=>g.category)); return Array.from(cats).sort(); }
+    function flattenGames(){ return GAMES.slice(); }
+
+    const categoriesGrid = document.getElementById('categoriesGrid');
+    const allCategories = document.getElementById('allCategories');
+    const filterGenre = document.getElementById('filterGenre');
+    const qGenre = document.getElementById('qGenre');
+    const sGenre = document.getElementById('sGenre');
+
+    function iconFor(cat){ return '<svg viewBox="0 0 24 24" width="34" height="34"><circle cx="12" cy="12" r="10" fill="'+(Math.random()>0.5?'#7c5cff':'#00e5a8')+'"/></svg>'; }
+
+    function renderCategoryCards(){ categoriesGrid.innerHTML=''; allCategories.innerHTML=''; filterGenre.innerHTML=''; qGenre.innerHTML=''; sGenre.innerHTML='';
+      const anyOpt=document.createElement('option'); anyOpt.value='any'; anyOpt.textContent='Cualquiera'; filterGenre.appendChild(anyOpt); qGenre.appendChild(anyOpt.cloneNode(true)); sGenre.appendChild(anyOpt.cloneNode(true));
+      getAllCategories().forEach(cat=>{
+        const card=document.createElement('div'); card.className='category-card'; card.innerHTML = iconFor(cat) + '<div><div style="font-weight:700">'+cat+'</div><div class="sub">'+GAMES.filter(x=>x.category===cat).length+' juegos</div></div>';
+        card.onclick=()=>openCategoryView(cat); categoriesGrid.appendChild(card);
+        const card2=card.cloneNode(true); card2.onclick=()=>openCategoryView(cat); allCategories.appendChild(card2);
+        const opt=document.createElement('option'); opt.value=cat; opt.textContent=cat; filterGenre.appendChild(opt); qGenre.appendChild(opt.cloneNode(true)); sGenre.appendChild(opt.cloneNode(true));
+      }); }
+
+    function openCategoryView(cat){ showSection('categorias'); document.getElementById('gamesListAll').innerHTML=''; const games = GAMES.filter(g=> g.category===cat); const container=document.getElementById('gamesListAll'); if(games.length===0){ container.innerHTML='<div class="sub">No hay juegos en esta categoría.</div>'; return } games.forEach((g,idx)=>{ const el=document.createElement('div'); el.className='game-item'; el.innerHTML = '<div style="display:flex;gap:10px;align-items:center"><div class="thumb">'+(idx+1)+'</div><div><div class="title">'+g.title+'</div><div class="sub">'+g.category+' • '+g.platform+'</div></div></div><div><a href="'+g.url+'" target="_blank"><button class="btn primary">Página oficial</button></a></div>'; container.appendChild(el); }) }
+
+    function renderTopGlobal(){ const out=document.getElementById('topGlobal'); out.innerHTML=''; const top = flattenGames().slice(0,8); top.forEach(g=>{ const el=document.createElement('div'); el.className='game-item'; el.innerHTML = '<div style="display:flex;gap:10px;align-items:center"><div class="thumb">★</div><div><div class="title">'+g.title+'</div><div class="sub">'+g.category+' • '+g.platform+'</div></div></div><div><a href="'+g.url+'" target="_blank"><button class="btn">Más info</button></a></div>'; out.appendChild(el); }) }
+
+    function renderGamesListAll(){ const genre=document.getElementById('filterGenre').value; const platform=document.getElementById('filterPlatform').value; const order=document.getElementById('filterOrder').value; const text=document.getElementById('filterText').value.toLowerCase(); let games = flattenGames(); if(genre!=='any') games = games.filter(g=> g.category===genre); if(platform!=='any') games = games.filter(g=> g.platform.includes(platform)); if(text) games = games.filter(g=> g.title.toLowerCase().includes(text)); if(order==='worst') games = games.reverse(); const container=document.getElementById('gamesListAll'); container.innerHTML=''; if(games.length===0){ container.innerHTML='<div class="sub">No se encontraron juegos con esos filtros.</div>'; return } games.forEach((g,idx)=>{ const el=document.createElement('div'); el.className='game-item'; el.innerHTML = '<div style="display:flex;gap:10px;align-items:center"><div class="thumb">'+(idx+1)+'</div><div><div class="title">'+g.title+'</div><div class="sub">'+g.category+' • '+g.platform+'</div></div></div><div><a href="'+g.url+'" target="_blank"><button class="btn primary">Ir al sitio</button></a></div>'; container.appendChild(el); }) }
+
+    /********************** RECOMENDADOR IA LOCAL **********************/
+    function tokenize(s){ return s.toLowerCase().split(/[^a-z0-9áéíóúñ]+/).filter(Boolean) }
+    function semanticScore(game, textTokens){ let score=0; const titleTokens = tokenize(game.title).concat(game.tags||[]); textTokens.forEach(t=>{ if(titleTokens.includes(t)) score+=30; }); return score; }
+
+    document.getElementById('runQuiz').onclick = ()=>{
+      const prefs = { genre: document.getElementById('qGenre').value, mood: document.getElementById('qMood').value, multi: document.getElementById('qMulti').value, platform: document.getElementById('qPlatform').value };
+      const text = document.getElementById('qText').value.trim(); const textTokens = tokenize(text);
+      let all = flattenGames();
+      const scored = all.map(g=>{
+        let s=0; if(prefs.genre!=='any' && g.category===prefs.genre) s+=35; if(prefs.mood!=='any' && g.mood===prefs.mood) s+=20; if(prefs.multi!=='any'){ const isMulti=!!g.multiplayer; if((prefs.multi==='yes'&&isMulti)||(prefs.multi==='no'&&!isMulti)) s+=20 } if(prefs.platform!=='any'&& g.platform.includes(prefs.platform)) s+=25; s += semanticScore(g,textTokens); s += Math.random()*5; return {...g,score:Math.round(s)}
+      }).sort((a,b)=> b.score - a.score);
+      const top = scored.filter(x=> x.score>0).slice(0,8);
+      const out=document.getElementById('quizResults'); out.innerHTML=''; if(top.length===0){ out.innerHTML='<div class="sub">No coincidencias. Prueba con otras palabras o selecciona una categoría.</div>'; return } top.forEach(t=>{ const el=document.createElement('div'); el.className='game-item'; el.innerHTML = '<div style="display:flex;gap:10px;align-items:center"><div class="thumb">R</div><div><div class="title">'+t.title+'</div><div class="sub">'+t.category+' • '+t.platform+' • Puntos: '+t.score+'</div></div></div><div><a href="'+t.url+'" target="_blank"><button class="btn primary">Ver</button></a></div>'; out.appendChild(el); }) }
+
+    document.getElementById('clearQuiz').onclick = ()=>{ document.getElementById('quizForm').reset(); document.getElementById('quizResults').innerHTML=''; }
+
+    /********************** BUSCADOR AVANZADO **********************/
+    document.getElementById('sBtn').onclick = ()=>{ const q=document.getElementById('sText').value.toLowerCase(); const g=document.getElementById('sGenre').value; const all=flattenGames(); let res = all.filter(x=> x.title.toLowerCase().includes(q)); if(g!=='any') res = res.filter(x=> x.category===g); const out=document.getElementById('sResults'); out.innerHTML=''; if(res.length===0){ out.innerHTML='<div class="sub">No se encontraron resultados.</div>'; return } res.forEach(r=>{ const el=document.createElement('div'); el.className='game-item'; el.innerHTML = '<div style="display:flex;gap:10px;align-items:center"><div class="thumb">?</div><div><div class="title">'+r.title+'</div><div class="sub">'+r.category+' • '+r.platform+'</div></div></div><div><a href="'+r.url+'" target="_blank"><button class="btn primary">Ir</button></a></div>'; out.appendChild(el); }) }
+
+    /********************** THEME / LANG / NAV **********************/
+    document.getElementById('themeSelect').addEventListener('change', e=>{ document.body.setAttribute('data-theme', e.target.value); });
+    const texts = { es: {home:'Inicio', quick:'Usa el cuestionario o prueba el demo.'}, en:{home:'Home', quick:'Use the questionnaire or try the demo.'} };
+    document.getElementById('langSelect').addEventListener('change', e=>{ const lang=e.target.value; document.querySelector('#home h2').textContent = texts[lang].home; document.getElementById('quickRec').textContent = texts[lang].quick; });
+    document.querySelectorAll('#nav button').forEach(btn=> btn.onclick = ()=>{ document.querySelectorAll('#nav button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); showSection(btn.dataset.target); })
+    function showSection(id){ document.querySelectorAll('.section').forEach(s=> s.style.display='none'); const el=document.getElementById(id); if(el) el.style.display='block'; }
+    document.getElementById('openSearch').onclick = ()=>{ const q=document.getElementById('topSearch').value; document.getElementById('sText').value=q; showSection('buscar'); document.getElementById('sBtn').click(); }
+
+    /********************** MÚSICA (WEBAUDIO) **********************/
+    // Generador de música ambiental simple — no necesita archivos externos
+    let audioCtx=null; let masterGain=null; let musicPlaying=false; let intervalId=null;
+    function startAmbient(){ if(audioCtx) return; audioCtx = new (window.AudioContext || window.webkitAudioContext)(); masterGain = audioCtx.createGain(); masterGain.gain.value = 0.15; masterGain.connect(audioCtx.destination);
+      // crear patrones simples
+      const baseOsc = audioCtx.createOscillator(); baseOsc.type='sine'; baseOsc.frequency.value=220; const baseGain = audioCtx.createGain(); baseGain.gain.value=0.0; baseOsc.connect(baseGain); baseGain.connect(masterGain); baseOsc.start();
+      let i=0; intervalId = setInterval(()=>{ const now=audioCtx.currentTime; const osc = audioCtx.createOscillator(); osc.type='sine'; osc.frequency.value = 110 + Math.random()*200; const g = audioCtx.createGain(); g.gain.setValueAtTime(0.0, now); g.gain.linearRampToValueAtTime(0.08, now+0.2); g.gain.exponentialRampToValueAtTime(0.001, now+4+Math.random()*3); osc.connect(g); g.connect(masterGain); osc.start(); setTimeout(()=>{ osc.stop(); }, 7000 + Math.random()*5000); i++; }, 1400);
+      musicPlaying=true; document.getElementById('musicState').textContent='Música: reproduciendo'; document.getElementById('toggleMusic').textContent='Detener música'; }
+    function stopAmbient(){ if(!audioCtx) return; clearInterval(intervalId); try{ audioCtx.close(); }catch(e){} audioCtx=null; masterGain=null; musicPlaying=false; document.getElementById('musicState').textContent='Música: parada'; document.getElementById('toggleMusic').textContent='Play / Stop'; }
+    document.getElementById('toggleMusic').onclick = ()=>{ if(!musicPlaying) startAmbient(); else stopAmbient(); }
+
+    /********************** INICIALIZACIÓN **********************/
+    renderCategoryCards(); renderTopGlobal(); renderGamesListAll();
+    document.getElementById('filterGenre').addEventListener('change', renderGamesListAll);
+    document.getElementById('filterPlatform').addEventListener('change', renderGamesListAll);
+    document.getElementById('filterOrder').addEventListener('change', renderGamesListAll);
+    document.getElementById('filterText').addEventListener('input', renderGamesListAll);
+
+    // Demo quick action
+    document.getElementById('startDemo').onclick = ()=>{ showSection('recomendaciones'); document.getElementById('qText').value='historia cooperativo'; document.getElementById('qGenre').value = getAllCategories()[0] || 'any'; document.getElementById('runQuiz').click(); }
+  </script>
+</body>
+</html>
